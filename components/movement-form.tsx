@@ -104,12 +104,15 @@ export function MovementForm({ open, onOpenChange, enterpriseId, enterpriseName 
                   Recette
                 </Button>
                 <Button
-                  variant={movementType === "DEPENSE" ? "default" : "outline"}
-                  onClick={() => setMovementType("DEPENSE")}
-                  className={cn(
-                    "flex-1 h-12",
-                    movementType === "DEPENSE" && "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
-                  )}
+                    variant={movementType === "DEPENSE" ? "default" : "outline"}
+                    onClick={() => setMovementType("DEPENSE")}
+                    className={cn(
+                      "flex-1 h-12 transition-colors duration-150",
+                      movementType === "DEPENSE"
+                        ? "bg-destructive hover:bg-destructive text-destructive-foreground "
+                        : // when RECETTE is active, make the DEPENSE button show a subtle destructive hover
+                          "hover:bg-destructive hover:text-black/90"
+                    )}
                 >
                   <ArrowDownRight className="h-4 w-4 mr-2" />
                   Dépense

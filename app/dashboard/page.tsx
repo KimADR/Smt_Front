@@ -3,7 +3,15 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DashboardCharts } from "@/components/dashboard-charts"
+import dynamic from 'next/dynamic'
+const DashboardCharts = dynamic(() => import('@/components/dashboard-charts').then(mod => mod.DashboardCharts), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center w-full h-48 bg-white/80 rounded-2xl">
+      <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+})
 import { RecentMovements } from "@/components/recent-movements"
 import { TaxAlerts } from "@/components/tax-alerts"
 import {

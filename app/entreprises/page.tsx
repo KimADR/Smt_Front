@@ -8,7 +8,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EnterpriseCard } from "@/components/enterprise-card"
-import { EnterpriseForm } from "@/components/enterprise-form"
+import dynamic from 'next/dynamic'
+const EnterpriseForm = dynamic(() => import('@/components/enterprise-form').then(mod => mod.EnterpriseForm), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+})
 import { Search, Plus, Filter, Building2, Users, CheckCircle, AlertCircle } from "lucide-react"
 
 const mockEnterprises = [

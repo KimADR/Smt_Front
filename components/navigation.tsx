@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Home, BarChart3, Building2, Menu, Zap, TrendingUp } from "lucide-react"
+import { Home, BarChart3, Building2, Menu, Zap, TrendingUp, Users, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navigation = [
@@ -14,6 +14,8 @@ const navigation = [
   { name: "Tableau de Bord", href: "/dashboard", icon: BarChart3 },
   { name: "Entreprises", href: "/entreprises", icon: Building2 },
   { name: "Mouvements", href: "/mouvements", icon: Zap },
+  { name: "Utilisateurs", href: "/utilisateurs", icon: Users },
+  { name: "Rapports", href: "/rapports", icon: FileText },
 ]
 
 export function Navigation() {

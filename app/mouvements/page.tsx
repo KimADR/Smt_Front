@@ -7,7 +7,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, List, ArrowUpRight, ArrowDownRight } from "lucide-react"
-import { MovementForm } from "@/components/movement-form"
+import dynamic from 'next/dynamic'
+const MovementForm = dynamic(() => import('@/components/movement-form').then(mod => mod.MovementForm), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+})
 import { Plus } from "lucide-react"
 
 const mockMovements = [
