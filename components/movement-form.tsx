@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useToast } from '@/hooks/use-toast'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +25,7 @@ interface MovementFormProps {
 }
 
 export function MovementForm({ open, onOpenChange, enterpriseId, enterpriseName }: MovementFormProps) {
+  const { toast } = useToast()
   const [movementType, setMovementType] = useState<"RECETTE" | "DEPENSE">("RECETTE")
   const [date, setDate] = useState<Date>(new Date())
   const [amount, setAmount] = useState("")
@@ -48,8 +50,9 @@ export function MovementForm({ open, onOpenChange, enterpriseId, enterpriseName 
     form.append("payload", JSON.stringify(movementData))
     attachments.forEach((file) => form.append("attachments", file))
 
+    const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
     // Post to API
-    fetch("/api/mouvements", {
+    fetch(`${API_URL}/api/mouvements`, {
       method: "POST",
       body: form,
     })
@@ -59,6 +62,7 @@ export function MovementForm({ open, onOpenChange, enterpriseId, enterpriseName 
         const data = await res.json()
         console.log("Mouvement créé", data)
         onOpenChange(false)
+        toast({ title: 'Mouvement enregistré', description: `${movementType === 'RECETTE' ? 'Recette' : 'Dépense'} de ${Number(movementData.montant).toLocaleString('fr-FR')} MGA ajoutée.`, variant: 'default' })
 
         // Reset form
         setMovementType("RECETTE")
@@ -71,7 +75,7 @@ export function MovementForm({ open, onOpenChange, enterpriseId, enterpriseName 
       })
       .catch((err) => {
         console.error(err)
-        alert("Erreur lors de la création du mouvement")
+        toast({ title: 'Erreur', description: String(err), variant: 'destructive' })
       })
   }
 

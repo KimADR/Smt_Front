@@ -1,22 +1,52 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Navigation } from "@/components/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { List, ArrowUpRight, ArrowDownRight, Calendar, Download, Printer, RefreshCw } from "lucide-react"
 
-const mockRows = [
-  { id: 1, entreprise: 'SARL FIHAVANANA', date: '2025-09-01', amount: 1200.5, description: 'Facture 123' },
-  { id: 2, entreprise: 'ETS MALAGASY', date: '2025-09-05', amount: -200, description: 'Achat' },
-  { id: 3, entreprise: 'SERVICE EXPERT', date: '2025-08-15', amount: 2500, description: 'Vente #456' },
-]
+// ...existing imports
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+
+type ReportRow = { id: number; entreprise: string; date: string; amount: number; description?: string }
 
 export default function RapportsPage() {
   const [from, setFrom] = useState<string | undefined>()
   const [to, setTo] = useState<string | undefined>()
-  const [rows, setRows] = useState(mockRows)
+  const [rows, setRows] = useState<ReportRow[]>([])
+  const [originalRows, setOriginalRows] = useState<ReportRow[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    setLoading(true)
+    fetch(`${API_URL}/api/reports`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text())
+        return r.json()
+      })
+      .then((data: any) => {
+        if (!mounted) return
+        // API returns { rows: [...] } or an array — normalize
+        const normalized = Array.isArray(data) ? data : Array.isArray(data.rows) ? data.rows : []
+        setRows(normalized)
+        setOriginalRows(normalized)
+      })
+      .catch((err) => {
+        if (mounted) setError(String(err))
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
+
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   function fetchReport() {
     // validate range
@@ -25,10 +55,10 @@ export default function RapportsPage() {
       return
     }
 
-    let filtered = mockRows
-    if (from) filtered = filtered.filter(r => r.date >= from)
-    if (to) filtered = filtered.filter(r => r.date <= to)
-    setRows(filtered)
+  let filtered = originalRows
+  if (from) filtered = filtered.filter((r) => r.date >= from)
+  if (to) filtered = filtered.filter((r) => r.date <= to)
+  setRows(filtered)
   }
 
   const [exporting, setExporting] = useState(false)
@@ -83,9 +113,9 @@ export default function RapportsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="glass"><CardHeader><div className="flex items-center justify-between"><List className="h-5 w-5 text-primary" /><Badge variant="secondary">Total</Badge></div><CardTitle className="text-2xl font-bold">{stats.total}</CardTitle><CardDescription>Lignes</CardDescription></CardHeader></Card>
-            <Card className="glass"><CardHeader><div className="flex items-center justify-between"><ArrowUpRight className="h-5 w-5 text-accent" /><Badge variant="secondary">Recettes</Badge></div><CardTitle className="text-2xl font-bold">{stats.recettes}</CardTitle><CardDescription>Recettes</CardDescription></CardHeader></Card>
-            <Card className="glass"><CardHeader><div className="flex items-center justify-between"><ArrowDownRight className="h-5 w-5 text-destructive" /><Badge variant="secondary">Dépenses</Badge></div><CardTitle className="text-2xl font-bold">{stats.depenses}</CardTitle><CardDescription>Dépenses</CardDescription></CardHeader></Card>
+            <Card className="glass"><CardHeader><div className="flex items-center justify-between"><List className="h-5 w-5 text-primary" /><Badge variant="secondary">Total</Badge></div><CardTitle className="text-2xl font-bold">{loading ? '…' : stats.total}</CardTitle><CardDescription>Lignes</CardDescription></CardHeader></Card>
+            <Card className="glass"><CardHeader><div className="flex items-center justify-between"><ArrowUpRight className="h-5 w-5 text-accent" /><Badge variant="secondary">Recettes</Badge></div><CardTitle className="text-2xl font-bold">{loading ? '…' : stats.recettes}</CardTitle><CardDescription>Recettes</CardDescription></CardHeader></Card>
+            <Card className="glass"><CardHeader><div className="flex items-center justify-between"><ArrowDownRight className="h-5 w-5 text-destructive" /><Badge variant="secondary">Dépenses</Badge></div><CardTitle className="text-2xl font-bold">{loading ? '…' : stats.depenses}</CardTitle><CardDescription>Dépenses</CardDescription></CardHeader></Card>
             <div />
           </div>
 
@@ -115,17 +145,25 @@ export default function RapportsPage() {
               <Card className="glass">
                 <CardHeader><CardTitle>Rapport</CardTitle><CardDescription>Résultats</CardDescription></CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {rows.map(r => (
-                      <div key={r.id} className="flex items-center justify-between p-3 bg-card/50 rounded-md">
-                        <div>
-                          <div className="text-sm text-muted-foreground">{r.date} • {r.entreprise}</div>
-                          <div className="font-medium">{r.description}</div>
-                        </div>
-                        <div className={((r.amount||0)>0)?'text-accent font-semibold':'text-destructive font-semibold'}>{(r.amount||0)}</div>
+                      <div className="space-y-3">
+                        {loading ? (
+                          <div>Chargement du rapport...</div>
+                        ) : error ? (
+                          <div className="text-red-500">Erreur: {error}</div>
+                        ) : rows.length === 0 ? (
+                          <div className="text-muted-foreground">Aucun résultat pour la période choisie.</div>
+                        ) : (
+                          rows.map((r) => (
+                            <div key={r.id} className="flex items-center justify-between p-3 bg-card/50 rounded-md">
+                              <div>
+                                <div className="text-sm text-muted-foreground">{r.date} • {r.entreprise}</div>
+                                <div className="font-medium">{r.description}</div>
+                              </div>
+                              <div className={((r.amount||0)>0)?'text-accent font-semibold':'text-destructive font-semibold'}>{(r.amount||0)}</div>
+                            </div>
+                          ))
+                        )}
                       </div>
-                    ))}
-                  </div>
                 </CardContent>
               </Card>
             </div>

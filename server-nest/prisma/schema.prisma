@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int         @id @default(autoincrement())
+  username     String      @unique
+  email        String      @unique
+  password     String
+  fullName     String?
+  phone        String?
+  avatar       String?
+  role         Role        @default(ENTREPRISE)
+  entreprise   Entreprise? @relation(fields: [entrepriseId], references: [id])
+  entrepriseId Int?
+  taxId        String?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  mouvements   Mouvement[] @relation("UserMouvements")
+}
+
+model Entreprise {
+  id            Int               @id @default(autoincrement())
+  name          String
+  sector        String?
+  siret         String?           @unique
+  address       String?
+  contactEmail  String?
+  phone         String?
+  status        EnterpriseStatus  @default(ACTIF)
+  taxType       TaxType           @default(IR)
+  legalForm     String?
+  activity      String?
+  annualRevenue Float?
+  city          String?
+  postalCode    String?
+  description   String?
+  users         User[]
+  mouvements    Mouvement[]
+  createdAt     DateTime          @default(now())
+}
+
+enum EnterpriseStatus {
+  ACTIF
+  INACTIF
+  SUSPENDU
+}
+
+enum TaxType {
+  IR
+  IS
+}
+
+model Mouvement {
+  id           Int           @id @default(autoincrement())
+  entreprise   Entreprise    @relation(fields: [entrepriseId], references: [id])
+  entrepriseId Int
+  user         User?         @relation("UserMouvements", fields: [userId], references: [id])
+  userId       Int?
+  amount       Decimal        @db.Decimal(15,2)
+  type         MouvementType
+  description  String?
+  createdAt    DateTime       @default(now())
+}
+
+enum Role {
+  ADMIN_FISCAL
+  ENTREPRISE
+  AGENT_FISCAL
+}
+
+enum MouvementType {
+  CREDIT
+  DEBIT
+}

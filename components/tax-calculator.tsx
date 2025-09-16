@@ -120,14 +120,14 @@ export function TaxCalculator({ open, onOpenChange, enterprise }: TaxCalculatorP
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">NIF</div>
-                  <div className="font-semibold">{enterprise?.nif || "-"}</div>
+                  <div className="font-semibold">{(enterprise as any)?.nif || "-"}</div>
 
                   <div className="text-sm text-muted-foreground mt-3">Chiffre d'affaires annuel</div>
                   <div className="font-semibold">{Number.parseFloat(revenue || "0").toLocaleString()} Ar</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Secteur d'activité</div>
-                  <div className="font-semibold">{enterprise?.sector || "-"}</div>
+                  <div className="font-semibold">{(enterprise as any)?.sector || "-"}</div>
 
                   <div className="text-sm text-muted-foreground mt-3">Bénéfice net (période)</div>
                   <div className="font-semibold text-destructive">{( (Number.parseFloat(revenue||"0") - Number.parseFloat(expenses||"0")) ).toLocaleString()} Ar</div>

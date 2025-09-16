@@ -7,26 +7,78 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Users, Plus, Phone, MoreHorizontal, User as UserIcon, Eye } from "lucide-react"
+import { Search, Users, Plus, Phone, MoreHorizontal, User as UserIcon, Eye, Mail, MapPin, Building2 } from "lucide-react"
+import Image from 'next/image'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useEffect } from "react"
 
-// Use canonical role values matching the backend/schema
-const mockUsers = [
-  { id: 1, username: "admin", email: "admin@example.com", role: "ADMIN_FISCAL" },
-  { id: 2, username: "jdupont", email: "j.dupont@example.com", role: "ENTREPRISE" },
-]
+// API base URL: can be overridden at build/runtime via NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+
+// Data will be fetched from backend API
 
 export default function UtilisateursPage() {
   const [query, setQuery] = useState("")
   const [showForm, setShowForm] = useState(false)
-  const [users, setUsers] = useState(mockUsers)
-  type User = { id: number; username: string; email: string; role: string; phone?: string; avatar?: string }
-  type UserForm = { username: string; email: string; role: string; password?: string; phone?: string; avatar?: string }
-  const [form, setForm] = useState<UserForm>({ username: "", email: "", role: "ENTREPRISE" })
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [users, setUsers] = useState([] as User[])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null as string | null)
+  
+  type User = {
+    id: number
+    username: string
+    email: string
+    role: string
+    fullName?: string
+    phone?: string
+    avatar?: string
+    entreprise?: string | null
+    taxId?: string | null
+    isActive?: boolean
+    createdAt?: string
+  }
 
-  const filtered = users.filter((u) => u.username.toLowerCase().includes(query.toLowerCase()) || (u.email || "").includes(query))
+  type UserForm = { username: string; email: string; role: string; password?: string; phone?: string; avatar?: string; fullName?: string; entreprise?: string }
+  const [form, setForm] = useState({ username: "", email: "", role: "ENTREPRISE" } as UserForm)
+  const [avatarPreview, setAvatarPreview] = useState(null as string | null)
+
+  // No static fallback users: UI must display real users from the API.
+
+  useEffect(() => {
+    let mounted = true
+  setLoading(true)
+  fetch(`${API_URL}/api/users`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text())
+        return r.json()
+      })
+      .then((data: User[]) => {
+        if (!mounted) return
+        if (Array.isArray(data) && data.length > 0) {
+          setUsers(data)
+        } else {
+          // API returned empty array — show no users and a friendly message
+          setUsers([])
+        }
+      })
+      .catch((err) => {
+        setError(String(err))
+        // If the API fails, show no users and display the error to the UI
+        setUsers([])
+      })
+      .finally(() => setLoading(false))
+    return () => { mounted = false }
+  }, [])
+
+  const isAdminSmt = (u: User) => {
+    const name = (u.fullName || u.username || "").toLowerCase().trim()
+    return name === "admin smt"
+  }
+
+  const filtered = users
+    .filter((u) => !isAdminSmt(u))
+    .filter((u) => u.username.toLowerCase().includes(query.toLowerCase()) || (u.email || "").includes(query))
 
   const stats = { total: users.length, admins: users.filter(u => u.role === 'ADMIN_FISCAL').length }
 
@@ -43,28 +95,54 @@ export default function UtilisateursPage() {
     }
   }
 
+  // Local images provided in /public/ — use these as avatar fallbacks
+  const PUBLIC_IMAGES = [
+    "/fitiavana.jpg",
+    "/kanto.jpg",
+    "/zandry.jpg",
+    "/sefobe.gif",
+    "/sefo.jpg",
+    "/anja.jpg",
+    "/tsiaro.png",
+  ]
+
+  // Assign one image per visible user (unique while the pool has images).
+  // If there are more users than images, the pool is reused deterministically.
+  const imageAssignments = new Map<number, string>()
+  {
+    const pool = [...PUBLIC_IMAGES]
+    for (const u of filtered) {
+      if (pool.length === 0) {
+        // refill pool when exhausted
+        pool.push(...PUBLIC_IMAGES)
+      }
+      const img = pool.shift() as string
+      imageAssignments.set(u.id, img)
+    }
+  }
+
   return (
     <div className="min-h-screen flex bg-background">
       <Navigation />
       <main className="flex-1 pt-14 lg:pt-0 pl-0 lg:pl-[calc(16rem+0.75rem)] p-4 lg:p-6">
         <div className="max-w-7xl mx-auto space-y-8">
-          <div className="flex items-center justify-between">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold">Utilisateurs</h1>
               <p className="text-muted-foreground">Gérez les comptes utilisateurs de la plateforme</p>
             </div>
 
-            <div>
-              <Button onClick={() => setShowForm(true)} className="animate-glow">
-                <Plus className="h-4 w-4 mr-2" />
-                Nouvel utilisateur
-              </Button>
-            </div>
+            <Button onClick={() => setShowForm(true)} className="animate-glow">
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvel utilisateur
+            </Button>
           </div>
 
+          {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="glass">
-              <CardHeader>
+            <Card className="glass border-primary/20 hover:border-primary/40 transition-all duration-300">
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <Users className="h-5 w-5 text-primary" />
                   <Badge variant="secondary">Total</Badge>
@@ -74,8 +152,8 @@ export default function UtilisateursPage() {
               </CardHeader>
             </Card>
 
-            <Card className="glass">
-              <CardHeader>
+            <Card className="glass border-accent/20 hover:border-accent/40 transition-all duration-300">
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <Users className="h-5 w-5 text-accent" />
                   <Badge variant="secondary">Admins</Badge>
@@ -89,72 +167,111 @@ export default function UtilisateursPage() {
             <div />
           </div>
 
+          {/* Search */}
           <Card className="glass">
             <CardHeader>
               <CardTitle>Rechercher</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Rechercher par nom ou email..." value={query} onChange={(e) => setQuery(e.target.value)} className="pl-10" />
+              <div className="flex flex-col lg:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Rechercher par nom ou email..." value={query} onChange={(e) => setQuery(e.target.value)} className="pl-10" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Users Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filtered.map((u: User) => (
-                  <Card key={u.id} className="glass hover:shadow-lg transition-all duration-200 group">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-muted/20 overflow-hidden flex items-center justify-center">
-                            {u.avatar ? (
-                              <img src={u.avatar} alt={u.username} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="text-muted-foreground"><UserIcon className="h-6 w-6" /></div>
-                            )}
-                          </div>
-                          <div>
-                            <CardTitle className="text-lg">{u.username}</CardTitle>
-                            <CardDescription className="text-sm truncate">{u.email}</CardDescription>
-                          </div>
-                        </div>
-
-                        <div>
-                          <Badge variant="secondary">{roleLabel(u.role)}</Badge>
-                        </div>
+              {loading ? (
+              <div className="col-span-3 p-4">Chargement des utilisateurs...</div>
+            ) : error ? (
+              <div className="col-span-3 p-4 text-red-500">Erreur: {error}</div>
+            ) : filtered.length === 0 ? (
+              <div className="col-span-3">
+                <Card className="glass">
+                  <CardContent className="text-center py-12">
+                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Aucun utilisateur trouvé</h3>
+                    <p className="text-muted-foreground mb-4">Aucun utilisateur ne correspond à vos critères de recherche.</p>
+                    <Button variant="outline" onClick={() => setQuery("")}>Réinitialiser la recherche</Button>
+                  </CardContent>
+                </Card>
+              </div>
+              ) : (
+              filtered.map((u: User) => {
+                // If user has a custom avatar (not a placeholder), use it; otherwise use the pre-assigned unique image
+                const assigned = imageAssignments.get(u.id)
+                const avatarUrl = (u.avatar && !u.avatar.includes('placeholder'))
+                  ? u.avatar
+                  : (assigned || PUBLIC_IMAGES[u.id % PUBLIC_IMAGES.length])
+                return (
+                  <Card key={u.id} className="overflow-hidden hover:shadow-xl transition-all duration-200">
+                    {/* Image header */}
+                    <div className="relative">
+                      <div className="h-64 bg-muted overflow-hidden relative">
+                        <Image src={avatarUrl} alt={u.username} fill className="object-cover object-center" priority={false} />
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4" />
-                          <span>{u.phone || "-"}</span>
-                        </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-sm px-4 py-2 flex items-center gap-2">
+                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20">
+                          <UserIcon className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="font-medium">{roleLabel(u.role)}</span>
+                      </div>
+                    </div>
 
-                        <div className="ml-auto">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
+                    {/* Body */}
+                    <CardContent className="pt-4 space-y-3">
+                    <div>
+                      <div className="text-xl font-semibold leading-tight">{u.fullName || u.username}</div>
+                      <div className="text-sm text-muted-foreground">{u.entreprise || ""}</div>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Mail className="h-4 w-4" />
+                        <span className="truncate">{u.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Phone className="h-4 w-4" />
+                        <span>{u.phone || "-"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>Madagascar</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <Badge variant="secondary">{u.isActive === false ? "Inactif" : "Actif"}</Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <a href={`/utilisateurs/${u.id}`}> 
                                 <Eye className="h-4 w-4 mr-2" />
                                 Voir le profil
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+                              </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <a href={`/utilisateurs/${u.id}/edit`}>
+                                <svg className="inline-block mr-2" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                Modifier
+                              </a>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardContent>
+                </Card>
+                )
+              })
+            )}
           </div>
         </div>
       </main>
@@ -182,7 +299,7 @@ export default function UtilisateursPage() {
                     <label className="text-sm text-muted-foreground">Nom d'utilisateur *</label>
                     <Input
                       value={form.username}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, username: e.target.value })}
+                          onChange={(e: any) => setForm({ ...form, username: e.target.value })}
                       placeholder="ex: jdupont"
                     />
                   </div>
@@ -192,7 +309,7 @@ export default function UtilisateursPage() {
                     <Input
                       type="email"
                       value={form.email}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: e.target.value })}
+                      onChange={(e: any) => setForm({ ...form, email: e.target.value })}
                       placeholder="ex: j.dupont@example.com"
                     />
                   </div>
@@ -218,7 +335,7 @@ export default function UtilisateursPage() {
                     <Input
                       type="password"
                       value={form.password || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, password: e.target.value })}
+                      onChange={(e: any) => setForm({ ...form, password: e.target.value })}
                       placeholder="Choisir un mot de passe"
                     />
                   </div>
@@ -230,7 +347,7 @@ export default function UtilisateursPage() {
                     <Input
                       type="tel"
                       value={form.phone || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, phone: e.target.value })}
+                      onChange={(e: any) => setForm({ ...form, phone: e.target.value })}
                       placeholder="Ex: +261341234567"
                     />
                   </div>
@@ -240,7 +357,7 @@ export default function UtilisateursPage() {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      onChange={(e: any) => {
                         const file = e.target.files?.[0]
                         if (file) {
                           const url = URL.createObjectURL(file)
@@ -251,9 +368,11 @@ export default function UtilisateursPage() {
                       className="w-full"
                     />
 
-                    {avatarPreview && (
-                      <img src={avatarPreview} alt="Preview" className="mt-2 w-24 h-24 rounded-full object-cover" />
-                    )}
+                        {avatarPreview && (
+                          <div className="mt-2 w-24 h-24 rounded-full overflow-hidden">
+                            <Image src={avatarPreview} alt="Preview" width={96} height={96} className="object-cover" unoptimized />
+                          </div>
+                        )}
                   </div>
                 </div>
 
@@ -275,11 +394,25 @@ export default function UtilisateursPage() {
     </div>
   )
 
-  function handleCreate(e: React.FormEvent) {
+  function handleCreate(e: any) {
     e.preventDefault()
-    const next = { id: users.length + 1, ...form }
-    setUsers([next, ...users])
-    setForm({ username: "", email: "", role: "User" })
-    setShowForm(false)
+    // Post to backend
+    fetch(`${API_URL}/api/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text())
+        return r.json()
+      })
+      .then((created: User) => {
+        setUsers([created, ...users])
+        setForm({ username: "", email: "", role: "ENTREPRISE" })
+        setShowForm(false)
+      })
+      .catch((err) => {
+        setError(String(err))
+      })
   }
 }

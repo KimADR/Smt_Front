@@ -19,41 +19,37 @@ import {
   Legend,
 } from "recharts"
 
-const revenueExpenseData = [
-  { month: "Jan", revenus: 12500000, depenses: 8200000 },
-  { month: "Fév", revenus: 15200000, depenses: 9800000 },
-  { month: "Mar", revenus: 18700000, depenses: 11200000 },
-  { month: "Avr", revenus: 16800000, depenses: 10500000 },
-  { month: "Mai", revenus: 21300000, depenses: 12800000 },
-  { month: "Jun", revenus: 19500000, depenses: 11900000 },
-]
+import React, { useEffect, useState } from 'react'
 
-const sectorData = [
-  { name: "Commerce", value: 35, color: "hsl(var(--chart-1))" },
-  { name: "Services", value: 28, color: "hsl(var(--chart-2))" },
-  { name: "Artisanat", value: 20, color: "hsl(var(--chart-3))" },
-  { name: "Agriculture", value: 12, color: "hsl(var(--chart-4))" },
-  { name: "Autres", value: 5, color: "hsl(var(--chart-5))" },
-]
-
-const netBalanceData = [
-  { month: "Jan", solde: 4300000 },
-  { month: "Fév", solde: 5400000 },
-  { month: "Mar", solde: 7500000 },
-  { month: "Avr", solde: 6300000 },
-  { month: "Mai", solde: 8500000 },
-  { month: "Jun", solde: 7600000 },
-]
-
-const topEnterprisesData = [
-  { name: "SARL FIHAVANANA", revenus: 25800000 },
-  { name: "ETS MALAGASY", revenus: 22300000 },
-  { name: "COMMERCE PLUS", revenus: 19700000 },
-  { name: "ARTISAN PRO", revenus: 18200000 },
-  { name: "SERVICE EXPERT", revenus: 16900000 },
-]
+// initially empty; will be filled from backend
+const emptyArray: any[] = []
 
 export function DashboardCharts() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+  const [revenueExpenseData, setRevenueExpenseData] = useState<any[]>(emptyArray)
+  const [sectorData, setSectorData] = useState<any[]>(emptyArray)
+  const [netBalanceData, setNetBalanceData] = useState<any[]>(emptyArray)
+  const [topEnterprisesData, setTopEnterprisesData] = useState<any[]>(emptyArray)
+
+  useEffect(() => {
+    let mounted = true
+    Promise.all([
+      fetch(`${API_URL}/api/analytics/monthly?months=6`).then(r => r.ok ? r.json() : []),
+      fetch(`${API_URL}/api/analytics/sector`).then(r => r.ok ? r.json() : []),
+      fetch(`${API_URL}/api/analytics/monthly?months=6`).then(r => r.ok ? r.json() : []),
+      fetch(`${API_URL}/api/analytics/top-enterprises`).then(r => r.ok ? r.json() : []),
+    ]).then(([monthly, sector, net, top]: any) => {
+      if (!mounted) return
+      // monthly provides { month: 'YYYY-MM', total }
+      const mapped = (monthly || []).map((m: any) => ({ month: (m.month || '').slice(5) || m.month, revenus: Number(m.total || 0), depenses: 0 }))
+      setRevenueExpenseData(mapped)
+      setNetBalanceData(mapped.map((m: any) => ({ month: m.month, solde: m.revenus })))
+      setSectorData((sector || []).map((s: any, i: number) => ({ name: s.sector || `Secteur ${i+1}`, value: Math.round((s.revenus || 0) / 1000000), color: `hsl(var(--chart-${(i%5)+1}))` })))
+      setTopEnterprisesData((top || []).map((t: any) => ({ name: t.name, revenus: Number(t.revenus || 0) })))
+    }).catch(() => {})
+    return () => { mounted = false }
+  }, [])
+
   return (
     <>
       {/* Revenue vs Expenses */}

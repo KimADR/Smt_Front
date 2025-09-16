@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useToast } from '@/hooks/use-toast'
 import { Navigation } from "@/components/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,120 +20,199 @@ const EnterpriseForm = dynamic(() => import('@/components/enterprise-form').then
 })
 import { Search, Plus, Filter, Building2, Users, CheckCircle, AlertCircle } from "lucide-react"
 
-const mockEnterprises = [
-  {
-    id: 1,
-    name: "SARL FIHAVANANA",
-    nif: "3000123456",
-    sector: "Commerce",
-    status: "Actif",
-    taxType: "IR",
-    annualRevenue: 25800000,
-    contact: {
-      phone: "+261 34 12 345 67",
-      email: "contact@fihavanana.mg",
-    },
-    address: "Antananarivo, Madagascar",
-  },
-  {
-    id: 2,
-    name: "ETS MALAGASY",
-    nif: "3000234567",
-    sector: "Services",
-    status: "Actif",
-    taxType: "IS",
-    annualRevenue: 22300000,
-    contact: {
-      phone: "+261 33 23 456 78",
-      email: "info@malagasy.mg",
-    },
-    address: "Fianarantsoa, Madagascar",
-  },
-  {
-    id: 3,
-    name: "COMMERCE PLUS",
-    nif: "3000345678",
-    sector: "Commerce",
-    status: "Suspendu",
-    taxType: "IR",
-    annualRevenue: 19700000,
-    contact: {
-      phone: "+261 32 34 567 89",
-      email: "admin@commerceplus.mg",
-    },
-    address: "Toamasina, Madagascar",
-  },
-  {
-    id: 4,
-    name: "ARTISAN PRO",
-    nif: "3000456789",
-    sector: "Artisanat",
-    status: "Actif",
-    taxType: "IR",
-    annualRevenue: 18200000,
-    contact: {
-      phone: "+261 34 45 678 90",
-      email: "contact@artisanpro.mg",
-    },
-    address: "Mahajanga, Madagascar",
-  },
-  {
-    id: 5,
-    name: "SERVICE EXPERT",
-    nif: "3000567890",
-    sector: "Services",
-    status: "Actif",
-    taxType: "IS",
-    annualRevenue: 16900000,
-    contact: {
-      phone: "+261 33 56 789 01",
-      email: "hello@serviceexpert.mg",
-    },
-    address: "Antsiranana, Madagascar",
-  },
-  {
-    id: 6,
-    name: "AGRI MODERNE",
-    nif: "3000678901",
-    sector: "Agriculture",
-    status: "Inactif",
-    taxType: "IR",
-    annualRevenue: 12500000,
-    contact: {
-      phone: "+261 32 67 890 12",
-      email: "info@agrimoderne.mg",
-    },
-    address: "Toliara, Madagascar",
-  },
-]
+import { useEffect } from "react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+
+type Enterprise = {
+  id: number
+  name: string
+  nif?: string
+  sector?: string
+  status?: string
+  taxType?: string
+  annualRevenue?: number
+  legalForm?: string
+  activity?: string
+  city?: string
+  postalCode?: string
+  description?: string
+  contact?: { phone?: string; email?: string }
+  address?: string
+}
 
 export default function EntreprisesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState<Enterprise | null>(null)
+  const [enterprises, setEnterprises] = useState<Enterprise[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
-  const filteredEnterprises = mockEnterprises.filter((enterprise) => {
+  useEffect(() => {
+    let mounted = true
+    setLoading(true)
+    fetch(`${API_URL}/api/entreprises`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text())
+        return r.json()
+      })
+      .then((data: any[]) => {
+        if (mounted) {
+          // normalize backend shape to frontend Enterprise type
+          const mapped = data.map((e) => ({
+            id: e.id,
+            name: e.name,
+            nif: e.siret || e.nif || "",
+            sector: e.sector || e.activity || "",
+            status: typeof e.status === 'string'
+              ? (String(e.status).toUpperCase() === 'ACTIF' ? 'Actif' : String(e.status).toUpperCase() === 'INACTIF' ? 'Inactif' : String(e.status).toUpperCase() === 'SUSPENDU' ? 'Suspendu' : (e.status || 'Actif'))
+              : 'Actif',
+            taxType: e.taxType || 'IR',
+            annualRevenue: Number(e.annualRevenue || e.revenusTotal || 0),
+            legalForm: e.legalForm || undefined,
+            activity: e.activity || undefined,
+            city: e.city || undefined,
+            postalCode: e.postalCode || undefined,
+            description: e.description || undefined,
+            contact: { phone: e.phone || undefined, email: e.contactEmail || undefined },
+            address: e.address || "",
+          }))
+          setEnterprises(mapped)
+        }
+      })
+      .catch((err) => {
+        if (mounted) setError(String(err))
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const filteredEnterprises = enterprises.filter((enterprise) => {
     const matchesSearch =
-      enterprise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enterprise.nif.includes(searchTerm) ||
-      enterprise.sector.toLowerCase().includes(searchTerm.toLowerCase())
+      (enterprise.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (enterprise.nif || "").includes(searchTerm) ||
+      (enterprise.sector || "").toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesStatus = statusFilter === "all" || enterprise.status.toLowerCase() === statusFilter.toLowerCase()
+    const matchesStatus = statusFilter === "all" || (enterprise.status || "").toLowerCase() === statusFilter.toLowerCase()
 
     return matchesSearch && matchesStatus
   })
+  const fetchEnterprises = () => {
+    let mounted = true
+    setLoading(true)
+    fetch(`${API_URL}/api/entreprises`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text())
+        return r.json()
+      })
+      .then((data: any[]) => {
+        if (mounted) {
+          // normalize backend shape to frontend Enterprise type (keep activity/description)
+          const mapped = data.map((e) => ({
+            id: e.id,
+            name: e.name,
+            nif: e.siret || e.nif || "",
+            sector: e.sector || e.activity || "",
+            status: typeof e.status === 'string'
+              ? (String(e.status).toUpperCase() === 'ACTIF' ? 'Actif' : String(e.status).toUpperCase() === 'INACTIF' ? 'Inactif' : String(e.status).toUpperCase() === 'SUSPENDU' ? 'Suspendu' : (e.status || 'Actif'))
+              : 'Actif',
+            taxType: e.taxType || 'IR',
+            annualRevenue: Number(e.annualRevenue || e.revenusTotal || 0),
+            legalForm: e.legalForm || undefined,
+            activity: e.activity || undefined,
+            city: e.city || undefined,
+            postalCode: e.postalCode || undefined,
+            description: e.description || undefined,
+            contact: { phone: e.phone || undefined, email: e.contactEmail || undefined },
+            address: e.address || "",
+          }))
+          setEnterprises(mapped)
+        }
+      })
+      .catch((err) => {
+        if (mounted) setError(String(err))
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
 
+    return () => {
+      mounted = false
+    }
+  }
+
+  useEffect(() => {
+    fetchEnterprises()
+  }, [])
+  
   const stats = {
-    total: mockEnterprises.length,
-    active: mockEnterprises.filter((e) => e.status === "Actif").length,
-    ir: mockEnterprises.filter((e) => e.taxType === "IR").length,
-    is: mockEnterprises.filter((e) => e.taxType === "IS").length,
+    total: enterprises.length,
+    active: enterprises.filter((e) => e.status === "Actif").length,
+    ir: enterprises.filter((e) => e.taxType === "IR").length,
+    is: enterprises.filter((e) => e.taxType === "IS").length,
+  }
+  const handleOnSaved = (item: any, action?: string, meta?: any) => {
+    // actions: createOptimistic, replace, updateOptimistic, revertCreate, revertUpdate, deleteOptimistic, revertDelete
+    if (action === 'createOptimistic') {
+      setEnterprises((prev) => [item, ...prev])
+      return
+    }
+
+    if (action === 'replace' && meta?.tempId) {
+      // replace optimistic with real
+      setEnterprises((prev) => prev.map((e) => (e.id === meta.tempId ? { ...item } : e)))
+      return
+    }
+
+    if (action === 'updateOptimistic') {
+      setEnterprises((prev) => prev.map((e) => (e.id === item.id ? { ...e, ...item } : e)))
+      return
+    }
+
+    if (action === 'revertCreate') {
+      setEnterprises((prev) => prev.filter((e) => e.id !== item.id))
+      return
+    }
+
+    if (action === 'revertUpdate') {
+      // meta.prev contains the previous data
+      if (meta?.prev) {
+        setEnterprises((prev) => prev.map((e) => (e.id === meta.prev.id ? meta.prev : e)))
+      }
+      return
+    }
+
+    if (action === 'deleteOptimistic') {
+      setEnterprises((prev) => prev.filter((e) => e.id !== item.id))
+      return
+    }
+
+    if (action === 'revertDelete') {
+      // put back the previous
+      if (meta?.prev) setEnterprises((prev) => [meta.prev, ...prev])
+      return
+    }
+
+    // default: full replace/insert
+    if (!action) {
+      // fallback full refresh
+      fetchEnterprises()
+      return
+    }
   }
 
   return (
     <div className="min-h-screen flex bg-background">
-  <Navigation />
-  <main className="flex-1 pt-14 lg:pt-0 pl-0 lg:pl-[calc(16rem+0.75rem)] p-4 lg:p-6">
+      <Navigation />
+      <main className="flex-1 pt-14 lg:pt-0 pl-0 lg:pl-[calc(16rem+0.75rem)] p-4 lg:p-6">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -141,7 +221,7 @@ export default function EntreprisesPage() {
               <p className="text-muted-foreground">Gérez vos entreprises et leurs informations fiscales</p>
             </div>
 
-            <Button onClick={() => setShowForm(true)} className="animate-glow">
+            <Button onClick={() => { setEditing(null); setShowForm(true) }} className="animate-glow">
               <Plus className="h-4 w-4 mr-2" />
               Nouvelle Entreprise
             </Button>
@@ -229,36 +309,56 @@ export default function EntreprisesPage() {
 
           {/* Enterprises Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEnterprises.map((enterprise) => (
-              <EnterpriseCard key={enterprise.id} enterprise={enterprise} />
-            ))}
+              {loading ? (
+              <div className="col-span-3 p-4">Chargement des entreprises...</div>
+            ) : error ? (
+              <div className="col-span-3 p-4 text-red-500">Erreur: {error}</div>
+            ) : filteredEnterprises.length === 0 ? (
+              <div className="col-span-3">
+                <Card className="glass">
+                  <CardContent className="text-center py-12">
+                    <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Aucune entreprise trouvée</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Aucune entreprise ne correspond à vos critères de recherche.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSearchTerm("")
+                        setStatusFilter("all")
+                      }}
+                    >
+                      Réinitialiser les filtres
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+              ) : (
+              filteredEnterprises.map((enterprise) => (
+                <EnterpriseCard key={enterprise.id} enterprise={enterprise as any} onEdit={(e) => { setEditing(e); setShowForm(true) }} />
+              ))
+            )}
           </div>
-
-          {filteredEnterprises.length === 0 && (
-            <Card className="glass">
-              <CardContent className="text-center py-12">
-                <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Aucune entreprise trouvée</h3>
-                <p className="text-muted-foreground mb-4">
-                  Aucune entreprise ne correspond à vos critères de recherche.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchTerm("")
-                    setStatusFilter("all")
-                  }}
-                >
-                  Réinitialiser les filtres
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </main>
 
       {/* Enterprise Form Modal */}
-      <EnterpriseForm open={showForm} onOpenChange={setShowForm} />
+      <EnterpriseForm
+        open={showForm}
+        onOpenChange={(open) => {
+          setShowForm(open)
+          if (!open) setEditing(null)
+        }}
+        initialData={editing || undefined}
+        onSaved={(item, action, meta) => {
+          try {
+            handleOnSaved(item, action, meta)
+          } catch (err) {
+            console.error(err)
+          }
+        }}
+      />
     </div>
   )
 }

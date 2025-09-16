@@ -1,57 +1,37 @@
+import React, { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowUpRight, ArrowDownRight, Building2, Calendar, MoreHorizontal } from "lucide-react"
 
-const recentMovements = [
-  {
-    id: 1,
-    type: "RECETTE",
-    amount: 2500000,
-    description: "Vente de marchandises",
-    enterprise: "SARL FIHAVANANA",
-    date: "2024-01-15",
-    status: "Validé",
-  },
-  {
-    id: 2,
-    type: "DEPENSE",
-    amount: 850000,
-    description: "Achat de matières premières",
-    enterprise: "ETS MALAGASY",
-    date: "2024-01-14",
-    status: "En attente",
-  },
-  {
-    id: 3,
-    type: "RECETTE",
-    amount: 1800000,
-    description: "Prestation de services",
-    enterprise: "COMMERCE PLUS",
-    date: "2024-01-14",
-    status: "Validé",
-  },
-  {
-    id: 4,
-    type: "DEPENSE",
-    amount: 650000,
-    description: "Frais de transport",
-    enterprise: "ARTISAN PRO",
-    date: "2024-01-13",
-    status: "Validé",
-  },
-  {
-    id: 5,
-    type: "RECETTE",
-    amount: 3200000,
-    description: "Vente en gros",
-    enterprise: "SERVICE EXPERT",
-    date: "2024-01-13",
-    status: "Validé",
-  },
-]
+type Movement = {
+  id: number
+  type: string
+  amount: number
+  description?: string
+  enterprise?: string
+  createdAt?: string
+  status?: string
+}
 
 export function RecentMovements() {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [movements, setMovements] = useState<Movement[]>([])
+
+  useEffect(() => {
+    const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+    setLoading(true)
+    fetch(`${api}/api/mouvements`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
+      .then((data: Movement[]) => setMovements(data.slice(0, 5)))
+      .catch((err) => setError(String(err)))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <Card className="glass">
       <CardHeader>
@@ -66,7 +46,13 @@ export function RecentMovements() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {recentMovements.map((movement) => (
+        {loading && <div className="text-sm text-muted-foreground">Chargement...</div>}
+        {error && <div className="text-sm text-destructive">Erreur: {error}</div>}
+        {!loading && !error && movements.length === 0 && (
+          <div className="text-sm text-muted-foreground">Aucun mouvement récent.</div>
+        )}
+
+        {movements.map((movement) => (
           <div
             key={movement.id}
             className="flex items-center justify-between p-4 rounded-lg border border-border/50 hover:border-border transition-colors"
@@ -88,7 +74,7 @@ export function RecentMovements() {
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-sm">{movement.description}</p>
                   <Badge variant={movement.status === "Validé" ? "default" : "secondary"} className="text-xs">
-                    {movement.status}
+                    {movement.status || ""}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -98,7 +84,7 @@ export function RecentMovements() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {new Date(movement.date).toLocaleDateString("fr-FR")}
+                    {movement.createdAt ? new Date(movement.createdAt).toLocaleDateString("fr-FR") : "-"}
                   </div>
                 </div>
               </div>

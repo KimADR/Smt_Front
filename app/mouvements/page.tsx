@@ -18,41 +18,53 @@ const MovementForm = dynamic(() => import('@/components/movement-form').then(mod
 })
 import { Plus } from "lucide-react"
 
-const mockMovements = [
-  {
-    id: 1,
-    date: "2025-09-01",
-    type: "RECETTE",
-    amount: 1500000,
-    description: "Paiement client #123",
-    enterprise: "SARL FIHAVANANA",
-  },
-  {
-    id: 2,
-    date: "2025-08-28",
-    type: "DEPENSE",
-    amount: 500000,
-    description: "Achat de fournitures",
-    enterprise: "ETS MALAGASY",
-  },
-  {
-    id: 3,
-    date: "2025-08-15",
-    type: "RECETTE",
-    amount: 2500000,
-    description: "Vente #456",
-    enterprise: "SERVICE EXPERT",
-  },
-]
+import { useEffect } from "react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+
+type Movement = {
+  id: number
+  date: string
+  type: "RECETTE" | "DEPENSE" | string
+  amount: number
+  description?: string
+  enterprise?: string
+}
 
 export default function MouvementsPage() {
   const [query, setQuery] = useState("")
   const [showForm, setShowForm] = useState(false)
+    const [movements, setMovements] = useState<Movement[]>([]) // Updated to use movements
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filtered = mockMovements.filter((m) => {
+  useEffect(() => {
+    let mounted = true
+    setLoading(true)
+    fetch(`${API_URL}/api/mouvements`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text())
+        return r.json()
+      })
+      .then((data: Movement[]) => {
+        if (mounted) setMovements(data)
+      })
+      .catch((err) => {
+        if (mounted) setError(String(err))
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const filtered = movements.filter((m) => {
     return (
-      m.description.toLowerCase().includes(query.toLowerCase()) ||
-      m.enterprise.toLowerCase().includes(query.toLowerCase())
+      (m.description || "").toLowerCase().includes(query.toLowerCase()) ||
+      (m.enterprise || "").toLowerCase().includes(query.toLowerCase())
     )
   })
 
@@ -83,7 +95,7 @@ export default function MouvementsPage() {
                   <List className="h-5 w-5 text-primary" />
                   <Badge variant="secondary">Total</Badge>
                 </div>
-                <CardTitle className="text-2xl font-bold">{mockMovements.length}</CardTitle>
+                <CardTitle className="text-2xl font-bold">{movements.length}</CardTitle>
                 <CardDescription>Flux enregistrés</CardDescription>
               </CardHeader>
             </Card>
@@ -94,7 +106,7 @@ export default function MouvementsPage() {
                   <ArrowUpRight className="h-5 w-5 text-accent" />
                   <Badge variant="secondary">Recettes</Badge>
                 </div>
-                <CardTitle className="text-2xl font-bold">{mockMovements.filter(m => m.type === 'RECETTE').length}</CardTitle>
+                <CardTitle className="text-2xl font-bold">{movements.filter((m: Movement) => m.type === 'RECETTE').length}</CardTitle>
                 <CardDescription>Recettes</CardDescription>
               </CardHeader>
             </Card>
@@ -105,7 +117,7 @@ export default function MouvementsPage() {
                   <ArrowDownRight className="h-5 w-5 text-destructive" />
                   <Badge variant="secondary">Dépenses</Badge>
                 </div>
-                <CardTitle className="text-2xl font-bold">{mockMovements.filter(m => m.type === 'DEPENSE').length}</CardTitle>
+                <CardTitle className="text-2xl font-bold">{movements.filter((m: Movement) => m.type === 'DEPENSE').length}</CardTitle>
                 <CardDescription>Dépenses</CardDescription>
               </CardHeader>
             </Card>
@@ -171,15 +183,15 @@ export default function MouvementsPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-muted-foreground">Total mouvements</div>
-                      <div className="font-semibold">{mockMovements.length}</div>
+                      <div className="font-semibold">{movements.length}</div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-muted-foreground">Recettes</div>
-                      <div className="font-semibold">{mockMovements.filter(m => m.type === 'RECETTE').length}</div>
+                      <div className="font-semibold">{movements.filter((m: Movement) => m.type === 'RECETTE').length}</div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-muted-foreground">Dépenses</div>
-                      <div className="font-semibold">{mockMovements.filter(m => m.type === 'DEPENSE').length}</div>
+                      <div className="font-semibold">{movements.filter((m: Movement) => m.type === 'DEPENSE').length}</div>
                     </div>
                   </div>
                 </CardContent>

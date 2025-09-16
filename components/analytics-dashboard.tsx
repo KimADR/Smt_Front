@@ -1,5 +1,6 @@
 "use client"
 
+import React, { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,37 +24,55 @@ import {
 } from "recharts"
 import { TrendingUp, TrendingDown, DollarSign, Building2, Calendar, Download, Filter } from "lucide-react"
 
-const monthlyData = [
-  { month: "Jan", revenus: 12500000, depenses: 8200000, benefice: 4300000, entreprises: 145 },
-  { month: "Fév", revenus: 15200000, depenses: 9800000, benefice: 5400000, entreprises: 148 },
-  { month: "Mar", revenus: 18700000, depenses: 11200000, benefice: 7500000, entreprises: 152 },
-  { month: "Avr", revenus: 16800000, depenses: 10500000, benefice: 6300000, entreprises: 154 },
-  { month: "Mai", revenus: 21300000, depenses: 12800000, benefice: 8500000, entreprises: 156 },
-  { month: "Jun", revenus: 19500000, depenses: 11900000, benefice: 7600000, entreprises: 158 },
-]
+// initial empty states (will be populated from backend)
 
-const sectorPerformance = [
-  { sector: "Commerce", revenus: 45200000, croissance: 12.5, couleur: "hsl(var(--chart-1))" },
-  { sector: "Services", revenus: 38900000, croissance: 8.3, couleur: "hsl(var(--chart-2))" },
-  { sector: "Artisanat", revenus: 28700000, croissance: 15.2, couleur: "hsl(var(--chart-3))" },
-  { sector: "Agriculture", revenus: 19800000, croissance: 5.7, couleur: "hsl(var(--chart-4))" },
-  { sector: "Industrie", revenus: 15600000, croissance: -2.1, couleur: "hsl(var(--chart-5))" },
-]
+// will be fetched from backend
 
-const taxComplianceData = [
-  { status: "À jour", count: 142, percentage: 89.3, couleur: "hsl(var(--accent))" },
-  { status: "En retard", count: 12, percentage: 7.5, couleur: "hsl(var(--destructive))" },
-  { status: "En cours", count: 5, percentage: 3.2, couleur: "hsl(var(--primary))" },
-]
+// will be fetched from backend
 
-const cashFlowData = [
-  { semaine: "S1", entrees: 8500000, sorties: 6200000 },
-  { semaine: "S2", entrees: 9200000, sorties: 7100000 },
-  { semaine: "S3", entrees: 7800000, sorties: 5900000 },
-  { semaine: "S4", entrees: 10100000, sorties: 8300000 },
-]
+// will be fetched from backend
 
 export function AnalyticsDashboard() {
+  const [entreprisesCount, setEntreprisesCount] = useState<number | null>(null)
+  const [revenusTotal, setRevenusTotal] = useState<number | null>(null)
+  const [monthlyData, setMonthlyData] = useState<Array<any>>([])
+  const [sectorPerformance, setSectorPerformance] = useState<Array<any>>([])
+  const [taxComplianceData, setTaxComplianceData] = useState<Array<any>>([])
+  const [cashFlowData, setCashFlowData] = useState<Array<any>>([])
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+
+  useEffect(() => {
+    let mounted = true
+    // fetch entreprises and mouvements to compute simple metrics
+    Promise.all([
+      fetch(`${API_URL}/api/analytics/summary`).then((r) => r.ok ? r.json() : {}),
+      fetch(`${API_URL}/api/analytics/monthly?months=6`).then((r) => r.ok ? r.json() : []),
+      fetch(`${API_URL}/api/analytics/sector`).then((r) => r.ok ? r.json() : []),
+      fetch(`${API_URL}/api/analytics/tax-compliance`).then((r) => r.ok ? r.json() : []),
+      fetch(`${API_URL}/api/analytics/cashflow?weeks=4`).then((r) => r.ok ? r.json() : []),
+    ])
+      .then(([summary, monthly, sector, taxCompliance, cashflow]: any) => {
+        if (!mounted) return
+        setEntreprisesCount(typeof summary.entreprises === 'number' ? summary.entreprises : null)
+        setRevenusTotal(typeof summary.total === 'number' ? summary.total : null)
+
+        if (Array.isArray(monthly)) {
+          const mapped = monthly.map((m: any) => ({ month: (m.month || '').slice(5) || m.month, revenus: m.total || 0, depenses: 0, benefice: m.total || 0, entreprises: 0 }))
+          setMonthlyData(mapped)
+        }
+
+        if (Array.isArray(sector)) setSectorPerformance(sector)
+        if (Array.isArray(taxCompliance)) setTaxComplianceData(taxCompliance)
+        if (Array.isArray(cashflow)) setCashFlowData(cashflow)
+      })
+      .catch(() => {
+        if (!mounted) return
+        setEntreprisesCount(null)
+        setRevenusTotal(null)
+      })
+
+    return () => { mounted = false }
+  }, [])
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -99,7 +118,7 @@ export function AnalyticsDashboard() {
                 +18.5%
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">103.2M</CardTitle>
+            <CardTitle className="text-2xl font-bold">{revenusTotal != null ? `${(revenusTotal/1000000).toFixed(1)}M` : '—'}</CardTitle>
             <CardDescription>Revenus Totaux (MGA)</CardDescription>
           </CardHeader>
         </Card>
@@ -113,7 +132,7 @@ export function AnalyticsDashboard() {
                 +8.9%
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">158</CardTitle>
+            <CardTitle className="text-2xl font-bold">{entreprisesCount ?? '—'}</CardTitle>
             <CardDescription>Entreprises Actives</CardDescription>
           </CardHeader>
         </Card>

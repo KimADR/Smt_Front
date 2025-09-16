@@ -1,8 +1,11 @@
+"use client"
+
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import React, { useEffect, useState } from "react"
 import {
   ArrowRight,
   Building2,
@@ -18,10 +21,20 @@ import {
 } from "lucide-react"
 
 export default function HomePage() {
+  const [summary, setSummary] = useState<{ entreprisesCount?: number; revenusTotal?: number; depensesTotal?: number; reportsCount?: number } | null>(null)
+
+  useEffect(() => {
+    const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+    fetch(`${api}/api/analytics/summary`)
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((data) => setSummary(data))
+      .catch(() => setSummary(null))
+  }, [])
+
   return (
     <div className="min-h-screen flex bg-background">
-  <Navigation />
-  <main className="flex-1 pt-14 lg:pt-0 pl-0 lg:pl-[calc(16rem+0.75rem)] p-4 lg:p-6">
+      <Navigation />
+      <main className="flex-1 pt-14 lg:pt-0 pl-0 lg:pl-[calc(16rem+0.75rem)] p-4 lg:p-6">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-accent/5 to-background py-20 lg:py-32">
           <div className="absolute inset-0 bg-grid-pattern opacity-5" />
@@ -64,7 +77,7 @@ export default function HomePage() {
               <p className="text-muted-foreground">Aperçu de l'écosystème SMT à Madagascar</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="glass border-primary/20 hover:border-primary/40 transition-all duration-300">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -73,7 +86,7 @@ export default function HomePage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">127</div>
+                  <div className="text-2xl font-bold">{summary?.entreprisesCount ?? '—'}</div>
                   <p className="text-sm text-muted-foreground">Entreprises Éligibles</p>
                 </CardContent>
               </Card>
@@ -86,7 +99,7 @@ export default function HomePage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">89.45M</div>
+                  <div className="text-2xl font-bold">{summary?.revenusTotal ? `${(summary.revenusTotal/1000000).toFixed(2)}M` : '—'}</div>
                   <p className="text-sm text-muted-foreground">Revenus Totaux (MGA)</p>
                 </CardContent>
               </Card>
@@ -99,7 +112,7 @@ export default function HomePage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">67.23M</div>
+                  <div className="text-2xl font-bold">{summary?.depensesTotal ? `${(summary.depensesTotal/1000000).toFixed(2)}M` : '—'}</div>
                   <p className="text-sm text-muted-foreground">Dépenses Totales (MGA)</p>
                 </CardContent>
               </Card>
@@ -112,7 +125,7 @@ export default function HomePage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">45</div>
+                  <div className="text-2xl font-bold">{summary?.reportsCount ?? '—'}</div>
                   <p className="text-sm text-muted-foreground">Rapports SMT Générés</p>
                 </CardContent>
               </Card>

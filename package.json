@@ -78,12 +78,12 @@
   },
   "devDependencies": {
   "@types/node": "^22",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+  "@types/react": "18.2.21",
+  "@types/react-dom": "18.2.7",
     
     
-    "postcss": "^8.5",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5"
+  "postcss": "^8.5",
+  "tailwindcss": "^3.4.17",
+  "typescript": "5.2.2"
   }
 }

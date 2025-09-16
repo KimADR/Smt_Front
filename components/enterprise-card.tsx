@@ -9,26 +9,36 @@ import { TaxCalculator } from "@/components/tax-calculator"
 interface Enterprise {
   id: number
   name: string
-  nif: string
-  sector: string
-  status: string
-  taxType: string
-  annualRevenue: number
-  contact: {
-    phone: string
-    email: string
+  nif?: string
+  sector?: string
+  status?: string
+  taxType?: string
+  annualRevenue?: number
+  legalForm?: string
+  activity?: string
+  city?: string
+  postalCode?: string
+  description?: string
+  contact?: {
+    phone?: string
+    email?: string
   }
-  address: string
+  // backend may return flat fields
+  phone?: string
+  contactEmail?: string
+  address?: string
 }
 
 interface EnterpriseCardProps {
   enterprise: Enterprise
+  onEdit?: (enterprise: Enterprise) => void
 }
 
-export function EnterpriseCard({ enterprise }: EnterpriseCardProps) {
+export function EnterpriseCard({ enterprise, onEdit }: EnterpriseCardProps) {
   const [isTaxOpen, setIsTaxOpen] = useState(false)
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+  const getStatusColor = (status?: string) => {
+    const s = (status || "").toString().toLowerCase()
+    switch (s) {
       case "actif":
         return "bg-accent/10 text-accent border-accent/20"
       case "inactif":
@@ -40,8 +50,9 @@ export function EnterpriseCard({ enterprise }: EnterpriseCardProps) {
     }
   }
 
-  const getTaxTypeColor = (taxType: string) => {
-    return taxType === "IR"
+  const getTaxTypeColor = (taxType?: string) => {
+    const t = (taxType || "").toString()
+    return t === "IR"
       ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
       : "bg-purple-500/10 text-purple-500 border-purple-500/20"
   }
@@ -68,9 +79,9 @@ export function EnterpriseCard({ enterprise }: EnterpriseCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onEdit ? onEdit(enterprise) : console.log('Edit enterprise', enterprise.id)}>
                 <Eye className="h-4 w-4 mr-2" />
-                Voir détails
+                Modifier entreprise
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Calculator className="h-4 w-4 mr-2" />
@@ -84,8 +95,8 @@ export function EnterpriseCard({ enterprise }: EnterpriseCardProps) {
       <CardContent className="space-y-4">
         {/* Status and Tax Type */}
         <div className="flex items-center gap-2">
-          <Badge className={getStatusColor(enterprise.status)}>{enterprise.status}</Badge>
-          <Badge className={getTaxTypeColor(enterprise.taxType)}>{enterprise.taxType}</Badge>
+          <Badge className={getStatusColor(enterprise.status)}>{enterprise.status || 'Actif'}</Badge>
+          <Badge className={getTaxTypeColor(enterprise.taxType)}>{enterprise.taxType || 'IR'}</Badge>
           <Badge variant="outline" className="text-xs">
             {enterprise.sector}
           </Badge>
@@ -95,24 +106,37 @@ export function EnterpriseCard({ enterprise }: EnterpriseCardProps) {
         <div className="p-3 bg-card/50 rounded-lg">
           <div className="flex justify-between items-center">
             <p className="text-sm text-muted-foreground">Chiffre d'affaires annuel</p>
-            <p className="text-lg font-semibold text-primary">{(enterprise.annualRevenue / 1000000).toFixed(1)}M MGA</p>
+            <p className="text-lg font-semibold text-primary">{enterprise.annualRevenue ? `${(enterprise.annualRevenue / 1000000).toFixed(1)}M MGA` : '-'}</p>
           </div>
         </div>
 
         {/* Contact Info */}
         <div className="space-y-2 text-sm">
+          {enterprise.legalForm && (
+            <div className="text-muted-foreground">
+              <strong>Forme juridique:</strong> {enterprise.legalForm}
+            </div>
+          )}
+          {enterprise.activity && (
+            <div className="text-muted-foreground">
+              <strong>Activité:</strong> {enterprise.activity}
+            </div>
+          )}
           <div className="flex items-center gap-2 text-muted-foreground">
             <Phone className="h-3 w-3" />
-            <span>{enterprise.contact.phone}</span>
+            <span>{enterprise.contact?.phone || enterprise.phone || ""}</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <Mail className="h-3 w-3" />
-            <span className="truncate">{enterprise.contact.email}</span>
+            <span className="truncate">{enterprise.contact?.email || enterprise.contactEmail || ""}</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <MapPin className="h-3 w-3" />
-            <span className="truncate">{enterprise.address}</span>
+            <span className="truncate">{enterprise.address || ""} {enterprise.city ? `, ${enterprise.city}` : ''} {enterprise.postalCode ? ` (${enterprise.postalCode})` : ''}</span>
           </div>
+          {enterprise.description && (
+            <div className="text-sm text-muted-foreground">{enterprise.description}</div>
+          )}
         </div>
 
         {/* Actions */}
@@ -133,8 +157,8 @@ export function EnterpriseCard({ enterprise }: EnterpriseCardProps) {
         onOpenChange={setIsTaxOpen}
         enterprise={{
           name: enterprise.name,
-          taxType: enterprise.taxType,
-          annualRevenue: enterprise.annualRevenue,
+          taxType: enterprise.taxType || 'IR',
+          annualRevenue: enterprise.annualRevenue || 0,
         }}
       />
     </>
