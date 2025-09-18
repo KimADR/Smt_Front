@@ -19,6 +19,7 @@ const MovementForm = dynamic(() => import('@/components/movement-form').then(mod
 import { Plus } from "lucide-react"
 
 import { useEffect } from "react"
+import { toast } from "@/hooks/use-toast"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 
@@ -46,11 +47,23 @@ export default function MouvementsPage() {
         if (!r.ok) throw new Error(await r.text())
         return r.json()
       })
-      .then((data: Movement[]) => {
-        if (mounted) setMovements(data)
+      .then((data: any[]) => {
+        if (mounted) {
+          const mapped = (data || []).map((m: any) => ({
+            id: m.id,
+            date: m.createdAt ? new Date(m.createdAt).toLocaleDateString('fr-FR') : '',
+            type: m.type === 'CREDIT' ? 'RECETTE' : m.type === 'DEBIT' ? 'DEPENSE' : String(m.type || ''),
+            amount: Number(m.amount || 0),
+            description: m.description || '',
+          }))
+          setMovements(mapped)
+        }
       })
       .catch((err) => {
-        if (mounted) setError(String(err))
+        if (mounted) {
+          setError(String(err))
+          toast({ title: 'Erreur de chargement', description: String(err), variant: 'destructive' })
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false)

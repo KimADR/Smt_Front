@@ -16,4 +16,5 @@ export declare class AnalyticsController {
     taxCompliance(): Promise<any[]>;
     cashflow(weeks?: string): Promise<any[]>;
     topEnterprises(): Promise<any[]>;
+    alerts(): Promise<any[]>;
 }

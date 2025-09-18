@@ -1,8 +1,8 @@
 {
-  "name": "false",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "name": "smt-nest-server",
+  "version": "0.1.0",
+  "description": "SMT NestJS backend server",
+  "author": "SMT Team",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -25,6 +25,7 @@
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
+    "@nestjs/swagger": "^6.0.0",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/throttler": "^6.4.0",

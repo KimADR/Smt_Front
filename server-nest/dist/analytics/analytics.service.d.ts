@@ -16,4 +16,5 @@ export declare class AnalyticsService {
     taxCompliance(): Promise<any[]>;
     cashflow(weeks?: number): Promise<any[]>;
     topEnterprises(): Promise<any[]>;
+    alerts(): Promise<any[]>;
 }

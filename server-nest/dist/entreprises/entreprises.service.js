@@ -36,11 +36,10 @@ let EntreprisesService = class EntreprisesService {
             description: input.description,
         };
         if (input.status) {
-            const s = String(input.status).toLowerCase();
-            data.status = s === 'actif' ? 'ACTIF' : s === 'inactif' ? 'INACTIF' : 'SUSPENDU';
+            data.status = input.status;
         }
         if (input.taxType)
-            data.taxType = String(input.taxType).toUpperCase();
+            data.taxType = input.taxType;
         try {
             return await this.prisma.entreprise.create({ data });
         }
@@ -81,11 +80,10 @@ let EntreprisesService = class EntreprisesService {
         if (input.legalForm !== undefined)
             data.legalForm = input.legalForm;
         if (input.status) {
-            const s = String(input.status).toLowerCase();
-            data.status = s === 'actif' ? 'ACTIF' : s === 'inactif' ? 'INACTIF' : 'SUSPENDU';
+            data.status = input.status;
         }
         if (input.taxType)
-            data.taxType = String(input.taxType).toUpperCase();
+            data.taxType = input.taxType;
         try {
             return await this.prisma.entreprise.update({ where: { id }, data });
         }

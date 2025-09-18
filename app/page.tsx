@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import React, { useEffect, useState } from "react"
+import { toast } from "@/hooks/use-toast"
 import {
   ArrowRight,
   Building2,
@@ -20,15 +21,30 @@ import {
   CheckCircle,
 } from "lucide-react"
 
+type AnalyticsSummary = {
+  entreprisesCount: number
+  revenusTotal: number
+  depensesTotal: number
+  reportsCount: number
+}
+
 export default function HomePage() {
-  const [summary, setSummary] = useState<{ entreprisesCount?: number; revenusTotal?: number; depensesTotal?: number; reportsCount?: number } | null>(null)
+  const [summary, setSummary] = useState<AnalyticsSummary | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
     fetch(`${api}/api/analytics/summary`)
-      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
-      .then((data) => setSummary(data))
-      .catch(() => setSummary(null))
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((data: AnalyticsSummary) => {
+        setSummary(data)
+        setError(null)
+      })
+      .catch((e) => {
+        setSummary(null)
+        setError(typeof e === 'number' ? `Erreur ${e}` : 'Impossible de charger les statistiques')
+        toast({ title: 'Erreur', description: 'Échec du chargement des statistiques' })
+      })
   }, [])
 
   return (
@@ -76,7 +92,9 @@ export default function HomePage() {
               <h2 className="text-3xl font-bold mb-4">Statistiques en Temps Réel</h2>
               <p className="text-muted-foreground">Aperçu de l'écosystème SMT à Madagascar</p>
             </div>
-
+            {error && (
+              <p className="text-sm text-destructive mb-4">{error}</p>
+            )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="glass border-primary/20 hover:border-primary/40 transition-all duration-300">
                 <CardHeader className="pb-3">

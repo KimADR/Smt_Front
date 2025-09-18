@@ -1,10 +1,11 @@
 import { UsersService } from './users.service';
+import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 export declare class UsersController {
     private readonly service;
     constructor(service: UsersService);
     list(): import("@prisma/client").Prisma.PrismaPromise<{
-        id: number;
         phone: string | null;
+        id: number;
         createdAt: Date;
         username: string;
         email: string;
@@ -13,9 +14,9 @@ export declare class UsersController {
         role: import("@prisma/client").$Enums.Role;
         isActive: boolean;
     }[]>;
-    create(dto: any): Promise<{
-        id: number;
+    create(dto: CreateUserDto): Promise<{
         phone: string | null;
+        id: number;
         createdAt: Date;
         username: string;
         email: string;
@@ -25,8 +26,8 @@ export declare class UsersController {
         isActive: boolean;
     }>;
     get(id: string): Promise<{
-        id: number;
         phone: string | null;
+        id: number;
         createdAt: Date;
         username: string;
         email: string;
@@ -35,9 +36,9 @@ export declare class UsersController {
         role: import("@prisma/client").$Enums.Role;
         isActive: boolean;
     }>;
-    update(id: string, dto: any): Promise<{
-        id: number;
+    update(id: string, dto: UpdateUserDto): Promise<{
         phone: string | null;
+        id: number;
         createdAt: Date;
         username: string;
         email: string;

@@ -3,8 +3,8 @@ export declare class MouvementsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     list(): Promise<{
-        id: number;
         description: string | null;
+        id: number;
         createdAt: Date;
         entrepriseId: number;
         userId: number | null;
@@ -12,8 +12,8 @@ export declare class MouvementsService {
         type: import("@prisma/client").$Enums.MouvementType;
     }[]>;
     createFromBody(body: any): Promise<{
-        id: number;
         description: string | null;
+        id: number;
         createdAt: Date;
         entrepriseId: number;
         userId: number | null;
@@ -21,8 +21,8 @@ export declare class MouvementsService {
         type: import("@prisma/client").$Enums.MouvementType;
     }>;
     createFromMultipart(rawBody: any): Promise<{
-        id: number;
         description: string | null;
+        id: number;
         createdAt: Date;
         entrepriseId: number;
         userId: number | null;

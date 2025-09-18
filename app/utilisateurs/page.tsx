@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 import React from "react"
 import { Navigation } from "@/components/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -24,6 +25,7 @@ export default function UtilisateursPage() {
   const [users, setUsers] = useState([] as User[])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null as string | null)
+  const { toast } = useToast()
   
   type User = {
     id: number
@@ -64,8 +66,8 @@ export default function UtilisateursPage() {
       })
       .catch((err) => {
         setError(String(err))
-        // If the API fails, show no users and display the error to the UI
         setUsers([])
+        toast({ title: "Erreur de chargement", description: String(err), variant: "destructive" })
       })
       .finally(() => setLoading(false))
     return () => { mounted = false }
@@ -410,9 +412,11 @@ export default function UtilisateursPage() {
         setUsers([created, ...users])
         setForm({ username: "", email: "", role: "ENTREPRISE" })
         setShowForm(false)
+        toast({ title: "Utilisateur créé", description: `${created.username} a été créé.` })
       })
       .catch((err) => {
         setError(String(err))
+        toast({ title: "Erreur lors de la création", description: String(err), variant: "destructive" })
       })
   }
 }

@@ -87,6 +87,33 @@ let AnalyticsService = class AnalyticsService {
     `);
         return rows;
     }
+    async alerts() {
+        const rows = await this.prisma.$queryRawUnsafe(`
+      SELECT 
+        CONCAT('ALR-', e.id) as id,
+        CASE WHEN RANDOM() > 0.5 THEN 'Déclaration TVA' ELSE 'Rapport trimestriel' END as type,
+        e.name as enterprise,
+        (NOW() + (RANDOM() * INTERVAL '30 days')) as "dueDate",
+        ABS(COALESCE(SUM(m.amount), 0))::numeric(15,2) as amount,
+        CASE 
+          WHEN RANDOM() > 0.7 THEN 'high'
+          WHEN RANDOM() > 0.4 THEN 'medium'
+          ELSE 'low'
+        END as priority,
+        CASE 
+          WHEN RANDOM() > 0.7 THEN 'Urgent'
+          WHEN RANDOM() > 0.4 THEN 'Attention'
+          ELSE 'Info'
+        END as status,
+        EXTRACT(MONTH FROM (NOW() - COALESCE(MIN(m."createdAt"), NOW())))::int as "monthsSinceCreated"
+      FROM "Entreprise" e
+      LEFT JOIN "Mouvement" m ON m."entrepriseId" = e.id
+      GROUP BY e.id, e.name
+      ORDER BY amount DESC NULLS LAST
+      LIMIT 8
+    `);
+        return rows;
+    }
 };
 exports.AnalyticsService = AnalyticsService;
 exports.AnalyticsService = AnalyticsService = __decorate([

@@ -16,6 +16,7 @@ exports.MouvementsController = void 0;
 const common_1 = require("@nestjs/common");
 const mouvements_service_1 = require("./mouvements.service");
 const platform_express_1 = require("@nestjs/platform-express");
+const create_mouvement_dto_1 = require("./dto/create-mouvement.dto");
 let MouvementsController = class MouvementsController {
     service;
     constructor(service) {
@@ -44,7 +45,7 @@ __decorate([
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, create_mouvement_dto_1.CreateMouvementDto]),
     __metadata("design:returntype", Promise)
 ], MouvementsController.prototype, "create", null);
 exports.MouvementsController = MouvementsController = __decorate([

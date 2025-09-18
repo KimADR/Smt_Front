@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
 import { EntreprisesService } from './entreprises.service'
+import { CreateEntrepriseDto, UpdateEntrepriseDto } from './dto/create-entreprise.dto'
 
 @Controller('api/entreprises')
 export class EntreprisesController {
@@ -11,7 +12,7 @@ export class EntreprisesController {
   }
 
   @Post()
-  create(@Body() dto: any) {
+  create(@Body() dto: CreateEntrepriseDto) {
     return this.service.create(dto)
   }
 
@@ -21,7 +22,7 @@ export class EntreprisesController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: any) {
+  update(@Param('id') id: string, @Body() dto: UpdateEntrepriseDto) {
     return this.service.update(Number(id), dto)
   }
 

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma.service'
+import { CreateEntrepriseDto, UpdateEntrepriseDto } from './dto/create-entreprise.dto'
 
 @Injectable()
 export class EntreprisesService {
@@ -9,7 +10,7 @@ export class EntreprisesService {
     return this.prisma.entreprise.findMany()
   }
 
-  async create(input: any) {
+  async create(input: CreateEntrepriseDto) {
     const data: any = {
       name: input.name,
       siret: input.siret,
@@ -25,10 +26,9 @@ export class EntreprisesService {
       description: input.description,
     }
     if (input.status) {
-      const s = String(input.status).toLowerCase()
-      data.status = s === 'actif' ? 'ACTIF' : s === 'inactif' ? 'INACTIF' : 'SUSPENDU'
+      data.status = input.status
     }
-    if (input.taxType) data.taxType = String(input.taxType).toUpperCase()
+    if (input.taxType) data.taxType = input.taxType
 
     try {
       return await this.prisma.entreprise.create({ data })
@@ -43,7 +43,7 @@ export class EntreprisesService {
     return e
   }
 
-  async update(id: number, input: any) {
+  async update(id: number, input: UpdateEntrepriseDto) {
     const data: any = {}
     if (input.name !== undefined) data.name = input.name
     if (input.siret !== undefined) data.siret = input.siret
@@ -58,10 +58,9 @@ export class EntreprisesService {
     if (input.description !== undefined) data.description = input.description
     if (input.legalForm !== undefined) data.legalForm = input.legalForm
     if (input.status) {
-      const s = String(input.status).toLowerCase()
-      data.status = s === 'actif' ? 'ACTIF' : s === 'inactif' ? 'INACTIF' : 'SUSPENDU'
+      data.status = input.status
     }
-    if (input.taxType) data.taxType = String(input.taxType).toUpperCase()
+    if (input.taxType) data.taxType = input.taxType
 
     try {
       return await this.prisma.entreprise.update({ where: { id }, data })

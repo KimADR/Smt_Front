@@ -28,6 +28,7 @@ import {
   Calendar,
   Filter,
 } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 export default function DashboardPage() {
   const [entreprisesCount, setEntreprisesCount] = useState<number | null>(null)
@@ -44,7 +45,7 @@ export default function DashboardPage() {
   useEffect(() => {
     let mounted = true
     fetch(`${API_URL}/api/analytics/summary?period=${period}`)
-      .then((r) => r.ok ? r.json() : {})
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
       .then((summary: any) => {
           if (!mounted) return
           setEntreprisesCount(typeof summary.entreprises === 'number' ? summary.entreprises : null)
@@ -55,10 +56,11 @@ export default function DashboardPage() {
           setGrowthPercent(typeof summary.growthPercent === 'number' ? summary.growthPercent : null)
           setTaxesDue(typeof summary.taxesDue === 'number' ? summary.taxesDue : null)
         })
-      .catch(() => {
+      .catch((e) => {
         if (!mounted) return
         setEntreprisesCount(null)
         setRevenusTotal(null)
+        toast({ title: 'Erreur', description: 'Échec du chargement du tableau de bord' })
       })
 
     return () => { mounted = false }

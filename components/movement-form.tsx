@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useToast } from '@/hooks/use-toast'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ArrowUpRight, ArrowDownRight, CalendarIcon, DollarSign, FileText, Save } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, CalendarIcon, DollarSign, FileText, Save, Building2 } from "lucide-react"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -33,6 +33,20 @@ export function MovementForm({ open, onOpenChange, enterpriseId, enterpriseName 
   const [isTaxPayment, setIsTaxPayment] = useState(false)
   const [reference, setReference] = useState("")
   const [attachments, setAttachments] = useState<File[]>([])
+  const [enterprises, setEnterprises] = useState<Array<{ id: number; name: string }>>([])
+  const [selectedEnterpriseId, setSelectedEnterpriseId] = useState<number | undefined>(enterpriseId)
+
+  useEffect(() => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+    fetch(`${API_URL}/api/entreprises`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list: any[]) => {
+        const mapped = (list || []).map((e) => ({ id: e.id, name: e.name }))
+        setEnterprises(mapped)
+        if (!selectedEnterpriseId && mapped.length > 0) setSelectedEnterpriseId(mapped[0].id)
+      })
+      .catch(() => {})
+  }, [open])
 
   const handleSubmit = () => {
     const movementData = {
@@ -42,7 +56,12 @@ export function MovementForm({ open, onOpenChange, enterpriseId, enterpriseName 
       description,
       est_paiement_impot: isTaxPayment,
       reference,
-      entreprise_id: enterpriseId,
+      entreprise_id: selectedEnterpriseId ?? enterpriseId,
+    }
+
+    if (!movementData.entreprise_id) {
+      toast({ title: 'Entreprise requise', description: 'Veuillez sélectionner une entreprise', variant: 'destructive' })
+      return
     }
 
     // Build multipart form data

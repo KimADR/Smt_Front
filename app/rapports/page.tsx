@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { toast } from "@/hooks/use-toast"
 import { Navigation } from "@/components/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -37,7 +38,10 @@ export default function RapportsPage() {
         setOriginalRows(normalized)
       })
       .catch((err) => {
-        if (mounted) setError(String(err))
+        if (mounted) {
+          setError(String(err))
+          toast({ title: 'Erreur de chargement', description: String(err), variant: 'destructive' })
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false)
@@ -49,16 +53,23 @@ export default function RapportsPage() {
   }, [])
 
   function fetchReport() {
-    // validate range
     if (from && to && from > to) {
       alert('La date de début doit être antérieure ou égale à la date de fin.')
       return
     }
-
-  let filtered = originalRows
-  if (from) filtered = filtered.filter((r) => r.date >= from)
-  if (to) filtered = filtered.filter((r) => r.date <= to)
-  setRows(filtered)
+    setLoading(true)
+    fetch(`${API_URL}/api/reports${from || to ? `?${new URLSearchParams({ ...(from?{from}:{}) as any, ...(to?{to}:{}) as any }).toString()}` : ''}`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text())
+        return r.json()
+      })
+      .then((data: any) => {
+        const normalized = Array.isArray(data) ? data : Array.isArray(data.rows) ? data.rows : []
+        setRows(normalized)
+        setOriginalRows(normalized)
+      })
+      .catch((err) => { setError(String(err)); toast({ title: 'Erreur du filtre', description: String(err), variant: 'destructive' }) })
+      .finally(() => setLoading(false))
   }
 
   const [exporting, setExporting] = useState(false)
@@ -76,6 +87,7 @@ export default function RapportsPage() {
       a.download = `report-${new Date().toISOString().slice(0,10)}.csv`
       a.click()
       URL.revokeObjectURL(url)
+      toast({ title: 'Export CSV', description: 'Le fichier a été généré.' })
     } finally {
       setTimeout(()=>setExporting(false), 400)
     }
@@ -84,6 +96,7 @@ export default function RapportsPage() {
   function exportPrint() {
     // Open print dialog — styles should handle print layout
     window.print()
+    toast({ title: 'Impression', description: 'Ouverture de la boîte de dialogue impression.' })
   }
 
   const stats = { total: rows.length, recettes: rows.filter(r => (r.amount||0) >0).length, depenses: rows.filter(r => (r.amount||0) <0).length }

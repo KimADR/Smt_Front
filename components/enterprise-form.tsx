@@ -170,18 +170,18 @@ export function EnterpriseForm({ open, onOpenChange, initialData, onSaved }: Ent
 
     // Submit form to backend (create or update)
     const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
-    const payload = {
+  const payload = {
   name: formData.name,
   siret: formData.nif,
   address: formData.address,
   contactEmail: formData.email,
   phone: formData.phone,
-  status: formData.status || 'Actif',
-  taxType: formData.taxType || (Number(formData.annualRevenue || 0) > 20000000 ? 'IS' : 'IR'),
+  status: (formData.status || 'Actif').toUpperCase(),
+  taxType: (formData.taxType || (Number(formData.annualRevenue || 0) > 20000000 ? 'IS' : 'IR')).toUpperCase(),
   sector: formData.sector,
   legalForm: formData.legalForm,
   activity: formData.activity,
-  annualRevenue: formData.annualRevenue,
+  annualRevenue: Number(formData.annualRevenue || 0),
   city: formData.city,
   postalCode: formData.postalCode,
   description: formData.description,

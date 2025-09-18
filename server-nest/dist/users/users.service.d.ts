@@ -3,8 +3,8 @@ export declare class UsersService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     list(): import("@prisma/client").Prisma.PrismaPromise<{
-        id: number;
         phone: string | null;
+        id: number;
         createdAt: Date;
         username: string;
         email: string;
@@ -14,8 +14,8 @@ export declare class UsersService {
         isActive: boolean;
     }[]>;
     create(input: any): Promise<{
-        id: number;
         phone: string | null;
+        id: number;
         createdAt: Date;
         username: string;
         email: string;
@@ -25,8 +25,8 @@ export declare class UsersService {
         isActive: boolean;
     }>;
     get(id: number): Promise<{
-        id: number;
         phone: string | null;
+        id: number;
         createdAt: Date;
         username: string;
         email: string;
@@ -36,8 +36,8 @@ export declare class UsersService {
         isActive: boolean;
     }>;
     update(id: number, input: any): Promise<{
-        id: number;
         phone: string | null;
+        id: number;
         createdAt: Date;
         username: string;
         email: string;

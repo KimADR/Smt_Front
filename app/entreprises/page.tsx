@@ -84,7 +84,9 @@ export default function EntreprisesPage() {
         }
       })
       .catch((err) => {
-        if (mounted) setError(String(err))
+        if (mounted) {
+          setError(String(err))
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false)
@@ -138,7 +140,9 @@ export default function EntreprisesPage() {
         }
       })
       .catch((err) => {
-        if (mounted) setError(String(err))
+        if (mounted) {
+          setError(String(err))
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false)
@@ -336,7 +340,32 @@ export default function EntreprisesPage() {
               </div>
               ) : (
               filteredEnterprises.map((enterprise) => (
-                <EnterpriseCard key={enterprise.id} enterprise={enterprise as any} onEdit={(e) => { setEditing(e); setShowForm(true) }} />
+                <EnterpriseCard key={enterprise.id} enterprise={enterprise as any} onEdit={async (e) => {
+                  try {
+                    const r = await fetch(`${API_URL}/api/entreprises/${e.id}`)
+                    const full = r.ok ? await r.json() : e
+                    setEditing({
+                      id: full.id,
+                      name: full.name,
+                      nif: full.siret || e.nif,
+                      sector: full.sector || e.sector,
+                      status: typeof full.status === 'string' ? (String(full.status).toUpperCase() === 'ACTIF' ? 'Actif' : String(full.status).toUpperCase() === 'INACTIF' ? 'Inactif' : 'Suspendu') : e.status,
+                      taxType: full.taxType || e.taxType,
+                      annualRevenue: full.annualRevenue ?? e.annualRevenue,
+                      legalForm: full.legalForm || e.legalForm,
+                      activity: full.activity || e.activity,
+                      city: full.city || e.city,
+                      postalCode: full.postalCode || e.postalCode,
+                      description: full.description || e.description,
+                      phone: full.phone || e.contact?.phone,
+                      email: full.contactEmail || e.contact?.email,
+                      address: full.address || e.address,
+                    } as any)
+                  } catch {
+                    setEditing(e)
+                  }
+                  setShowForm(true)
+                }} />
               ))
             )}
           </div>

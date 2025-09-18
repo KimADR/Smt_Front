@@ -38,6 +38,9 @@ let AnalyticsController = class AnalyticsController {
     topEnterprises() {
         return this.service.topEnterprises();
     }
+    alerts() {
+        return this.service.alerts();
+    }
 };
 exports.AnalyticsController = AnalyticsController;
 __decorate([
@@ -79,6 +82,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], AnalyticsController.prototype, "topEnterprises", null);
+__decorate([
+    (0, common_1.Get)('alerts'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AnalyticsController.prototype, "alerts", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, common_1.Controller)('api/analytics'),
     __metadata("design:paramtypes", [analytics_service_1.AnalyticsService])

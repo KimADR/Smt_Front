@@ -1,77 +1,78 @@
 import { EntreprisesService } from './entreprises.service';
+import { CreateEntrepriseDto, UpdateEntrepriseDto } from './dto/create-entreprise.dto';
 export declare class EntreprisesController {
     private readonly service;
     constructor(service: EntreprisesService);
     findAll(): import("@prisma/client").Prisma.PrismaPromise<{
-        id: number;
         name: string;
-        sector: string | null;
         siret: string | null;
         address: string | null;
         contactEmail: string | null;
         phone: string | null;
-        status: import("@prisma/client").$Enums.EnterpriseStatus;
-        taxType: import("@prisma/client").$Enums.TaxType;
+        sector: string | null;
         legalForm: string | null;
         activity: string | null;
         annualRevenue: number | null;
         city: string | null;
         postalCode: string | null;
         description: string | null;
+        status: import("@prisma/client").$Enums.EnterpriseStatus;
+        taxType: import("@prisma/client").$Enums.TaxType;
+        id: number;
         createdAt: Date;
     }[]>;
-    create(dto: any): Promise<{
-        id: number;
+    create(dto: CreateEntrepriseDto): Promise<{
         name: string;
-        sector: string | null;
         siret: string | null;
         address: string | null;
         contactEmail: string | null;
         phone: string | null;
-        status: import("@prisma/client").$Enums.EnterpriseStatus;
-        taxType: import("@prisma/client").$Enums.TaxType;
+        sector: string | null;
         legalForm: string | null;
         activity: string | null;
         annualRevenue: number | null;
         city: string | null;
         postalCode: string | null;
         description: string | null;
+        status: import("@prisma/client").$Enums.EnterpriseStatus;
+        taxType: import("@prisma/client").$Enums.TaxType;
+        id: number;
         createdAt: Date;
     }>;
     findOne(id: string): Promise<{
-        id: number;
         name: string;
-        sector: string | null;
         siret: string | null;
         address: string | null;
         contactEmail: string | null;
         phone: string | null;
-        status: import("@prisma/client").$Enums.EnterpriseStatus;
-        taxType: import("@prisma/client").$Enums.TaxType;
+        sector: string | null;
         legalForm: string | null;
         activity: string | null;
         annualRevenue: number | null;
         city: string | null;
         postalCode: string | null;
         description: string | null;
+        status: import("@prisma/client").$Enums.EnterpriseStatus;
+        taxType: import("@prisma/client").$Enums.TaxType;
+        id: number;
         createdAt: Date;
     }>;
-    update(id: string, dto: any): Promise<{
-        id: number;
+    update(id: string, dto: UpdateEntrepriseDto): Promise<{
         name: string;
-        sector: string | null;
         siret: string | null;
         address: string | null;
         contactEmail: string | null;
         phone: string | null;
-        status: import("@prisma/client").$Enums.EnterpriseStatus;
-        taxType: import("@prisma/client").$Enums.TaxType;
+        sector: string | null;
         legalForm: string | null;
         activity: string | null;
         annualRevenue: number | null;
         city: string | null;
         postalCode: string | null;
         description: string | null;
+        status: import("@prisma/client").$Enums.EnterpriseStatus;
+        taxType: import("@prisma/client").$Enums.TaxType;
+        id: number;
         createdAt: Date;
     }>;
     remove(id: string): Promise<{

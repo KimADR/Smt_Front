@@ -34,4 +34,9 @@ export class AnalyticsController {
   topEnterprises() {
     return this.service.topEnterprises()
   }
+
+  @Get('alerts')
+  alerts() {
+    return this.service.alerts()
+  }
 }
