@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import helmet from 'helmet'
@@ -39,11 +40,11 @@ async function bootstrap() {
     try {
       const document = SwaggerModule.createDocument(app, config)
       SwaggerModule.setup('api/docs', app, document)
-    } catch (err) {
+    } catch (err: any) {
       // If swagger scanning fails (peer dependency mismatch), don't crash the app.
       // Log the error and continue without swagger docs.
       // eslint-disable-next-line no-console
-      console.warn('Swagger module failed to initialize:', err?.message || err)
+      console.warn('Swagger module failed to initialize:', err?.message ?? err)
     }
   }
 

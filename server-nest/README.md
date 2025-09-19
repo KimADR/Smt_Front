@@ -1,3 +1,17 @@
+# server-nest environment
+
+This folder contains the NestJS backend. Environment variables are read from `.env` files at runtime.
+
+Do NOT commit secrets. Use the provided `server-nest/.env.example` as a template and create a local `.env.local` with real values for development.
+
+Example:
+
+```
+cp server-nest/.env.example server-nest/.env.local
+# then edit server-nest/.env.local to add your real DATABASE_URL and JWT_SECRET
+```
+
+In CI / production, inject these values through your hosting provider or CI secrets manager instead of committing them.
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>

@@ -140,7 +140,7 @@ const SidebarProvider = React.forwardRef<
     return (
       <SidebarContext.Provider value={contextValue}>
         <TooltipProvider delayDuration={0}>
-          <div
+            <div
             style={
               {
                 '--sidebar-width': SIDEBAR_WIDTH,
@@ -152,7 +152,7 @@ const SidebarProvider = React.forwardRef<
               'group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar',
               className,
             )}
-            ref={ref}
+            ref={ref as any}
             {...props}
           >
             {children}
@@ -187,14 +187,14 @@ const Sidebar = React.forwardRef<
 
     if (collapsible === 'none') {
       return (
-        <div
-          className={cn(
-            'flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground',
-            className,
-          )}
-          ref={ref}
-          {...props}
-        >
+          <div
+            className={cn(
+              'flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground',
+              className,
+            )}
+            ref={ref}
+            {...props}
+          >
           {children}
         </div>
       )
@@ -222,7 +222,7 @@ const Sidebar = React.forwardRef<
 
     return (
       <div
-        ref={ref}
+        ref={ref as any}
         className="group peer hidden md:block text-sidebar-foreground"
         data-state={state}
         data-collapsible={state === 'collapsed' ? collapsible : ''}
@@ -240,6 +240,7 @@ const Sidebar = React.forwardRef<
               : 'group-data-[collapsible=icon]:w-[--sidebar-width-icon]',
           )}
         />
+
         <div
           className={cn(
             'duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex',
@@ -280,7 +281,7 @@ const SidebarTrigger = React.forwardRef<
       variant="ghost"
       size="icon"
       className={cn('h-7 w-7', className)}
-      onClick={(event) => {
+      onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
         onClick?.(event)
         toggleSidebar()
       }}
@@ -444,7 +445,7 @@ const SidebarGroupLabel = React.forwardRef<
 
   return (
     <Comp
-      ref={ref}
+          ref={ref as any}
       data-sidebar="group-label"
       className={cn(
         'duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
@@ -465,7 +466,7 @@ const SidebarGroupAction = React.forwardRef<
 
   return (
     <Comp
-      ref={ref}
+      ref={ref as any}
       data-sidebar="group-action"
       className={cn(
         'absolute right-3 top-3.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
@@ -566,7 +567,7 @@ const SidebarMenuButton = React.forwardRef<
 
     const button = (
       <Comp
-        ref={ref}
+        ref={ref as any}
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
@@ -611,7 +612,7 @@ const SidebarMenuAction = React.forwardRef<
 
   return (
     <Comp
-      ref={ref}
+      ref={ref as any}
       data-sidebar="menu-action"
       className={cn(
         'absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 peer-hover/menu-button:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0',
@@ -653,7 +654,7 @@ const SidebarMenuBadge = React.forwardRef<
 SidebarMenuBadge.displayName = 'SidebarMenuBadge'
 
 const SidebarMenuSkeleton = React.forwardRef<
-  HTMLDivElement,
+  any,
   React.ComponentProps<'div'> & {
     showIcon?: boolean
   }
@@ -723,9 +724,17 @@ const SidebarMenuSubButton = React.forwardRef<
 >(({ asChild = false, size = 'md', isActive, className, ...props }, ref) => {
   const Comp = asChild ? Slot : 'a'
 
+  // When using `asChild`, some parent code may pass string refs or other
+  // ref shapes; wrap the forwarded ref so we only forward actual DOM refs.
+  const handleRef = (node: any) => {
+    if (!ref) return
+    if (typeof ref === 'function') ref(node)
+    else (ref as React.MutableRefObject<any>).current = node
+  }
+
   return (
     <Comp
-      ref={ref}
+      ref={handleRef as any}
       data-sidebar="menu-sub-button"
       data-size={size}
       data-active={isActive}

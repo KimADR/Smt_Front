@@ -213,7 +213,7 @@ export default function UtilisateursPage() {
                     {/* Image header */}
                     <div className="relative">
                       <div className="h-64 bg-muted overflow-hidden relative">
-                        <Image src={avatarUrl} alt={u.username} fill className="object-cover object-center" priority={false} />
+                        <Image src={avatarUrl} alt={u.username} fill className="object-cover object-center" priority={false} quality={25} />
                       </div>
                       <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-sm px-4 py-2 flex items-center gap-2">
                         <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20">

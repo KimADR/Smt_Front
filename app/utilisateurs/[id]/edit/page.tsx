@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { Navigation } from '@/components/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -10,14 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
 
-export default function EditUserPage({ params }: any) {
+export default function EditUserPage({ params }: { params: { id: string } }) {
   const { id } = params
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [form, setForm] = useState({ username: '', email: '', fullName: '', phone: '', role: 'ENTREPRISE', avatar: '' })
-  const [avatarFile, setAvatarFile] = useState(null)
-  const [previewUrl, setPreviewUrl] = useState(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  const [form, setForm] = useState<{ username: string; email: string; fullName: string; phone: string; role: string; avatar: string }>({ username: '', email: '', fullName: '', phone: '', role: 'ENTREPRISE', avatar: '' })
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [isValid, setIsValid] = useState(false)
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function EditUserPage({ params }: any) {
         role: data.role || 'ENTREPRISE',
         avatar: data.avatar || '',
       }); setPreviewUrl(data?.avatar || null) })
-      .catch((e) => setError(String(e)))
+  .catch((e) => setError(String(e)))
       .finally(() => setLoading(false))
     return () => { mounted = false }
   }, [id])
@@ -65,7 +66,7 @@ export default function EditUserPage({ params }: any) {
     // Compress image before converting to base64
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
-    const img = new Image()
+  const img = new window.Image()
     
     img.onload = () => {
       // Resize image to max 300x300 to reduce size
@@ -94,7 +95,7 @@ export default function EditUserPage({ params }: any) {
       setForm({ ...form, avatar: base64 })
     }
     
-    img.src = URL.createObjectURL(file)
+  img.src = URL.createObjectURL(file)
   }
 
   // Basic validation: username required, email format
@@ -129,8 +130,11 @@ export default function EditUserPage({ params }: any) {
   if (error) return <div className="p-6 text-red-500">Erreur: {error}</div>
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <Card className="glass">
+    <div className="min-h-screen flex bg-background">
+      <Navigation />
+      <main className="flex-1 pt-14 lg:pt-0 pl-0 lg:pl-[calc(16rem+0.75rem)] p-4 lg:p-6">
+        <div className="p-6 max-w-4xl mx-auto">
+          <Card className="glass">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -197,7 +201,9 @@ export default function EditUserPage({ params }: any) {
             </div>
           </form>
         </CardContent>
-      </Card>
+          </Card>
+        </div>
+      </main>
     </div>
   )
 }

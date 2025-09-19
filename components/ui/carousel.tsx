@@ -9,10 +9,10 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
-type CarouselApi = UseEmblaCarouselType[1]
-type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
-type CarouselOptions = UseCarouselParameters[0]
-type CarouselPlugin = UseCarouselParameters[1]
+type UseEmblaReturn = ReturnType<typeof useEmblaCarousel>
+type CarouselApi = UseEmblaReturn[1]
+type CarouselOptions = Record<string, any>
+type CarouselPlugin = Array<any>
 
 type CarouselProps = {
   opts?: CarouselOptions

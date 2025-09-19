@@ -24,6 +24,7 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+    domains: ['localhost'],
   },
 }
 
